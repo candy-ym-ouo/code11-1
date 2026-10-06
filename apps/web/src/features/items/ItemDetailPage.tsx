@@ -288,7 +288,13 @@ export function ItemDetailPage() {
       </div>
 
       <ShareDialog open={shareOpen} fid={fid!} itemIds={[item.id]} onClose={() => setShareOpen(false)} />
-      <VersionDialog open={versionOpen} fid={fid!} itemId={item.id} onClose={() => setVersionOpen(false)} />
+      <VersionDialog
+        open={versionOpen}
+        fid={fid!}
+        itemId={item.id}
+        canEdit={item.permissions.canEdit}
+        onClose={() => setVersionOpen(false)}
+      />
     </div>
   );
 }

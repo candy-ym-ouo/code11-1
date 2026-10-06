@@ -5,7 +5,7 @@ import { cleanStory, escapeHtml } from '../utils/sanitize';
 import * as audit from './auditService';
 import { itemWithAccess, type FamilyContext } from './permissionService';
 import { toNoteDto } from '../serializers';
-import { toVersionSnapshot } from './itemService';
+import { SNAPSHOT_INCLUDE, toVersionSnapshot } from './itemService';
 
 export interface ActorMeta {
   ip?: string | null;
@@ -79,7 +79,7 @@ export async function acceptNote(
   const merged = cleanStory(`${item.storyHtml ?? ''}${addition}`);
 
   return prisma.$transaction(async (tx) => {
-    const updatedItem = await tx.item.update({
+    await tx.item.update({
       where: { id: itemId },
       data: { storyHtml: merged.html, storyText: merged.text || null },
     });
@@ -88,12 +88,13 @@ export async function acceptNote(
       data: { status: 'accepted', decidedBy: userId, decidedAt: new Date() },
       include: { author: { select: { id: true, displayName: true, avatarColor: true } } },
     });
+    const snapshotRow = await tx.item.findUniqueOrThrow({ where: { id: itemId }, include: SNAPSHOT_INCLUDE });
     const last = await tx.itemVersion.findFirst({ where: { itemId }, orderBy: { version: 'desc' } });
     await tx.itemVersion.create({
       data: {
         itemId,
         version: (last?.version ?? 0) + 1,
-        snapshot: toVersionSnapshot(updatedItem),
+        snapshot: toVersionSnapshot(snapshotRow),
         createdBy: userId,
       },
     });

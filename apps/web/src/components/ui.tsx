@@ -139,12 +139,14 @@ export function Modal({
   onClose,
   children,
   footer,
+  className,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  className?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -159,7 +161,7 @@ export function Modal({
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="modal"
+        className={['modal', className].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal="true"
         aria-label={title}

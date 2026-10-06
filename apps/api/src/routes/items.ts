@@ -4,8 +4,11 @@ import {
   createNoteSchema,
   listItemsQuerySchema,
   rejectNoteSchema,
+  revertVersionSchema,
   updateItemSchema,
+  versionDiffQuerySchema,
   type ListItemsQuery,
+  type RevertVersionInput,
 } from '@heirloom/shared';
 import { asyncHandler } from '../http/asyncHandler';
 import { clientMeta, currentUser } from '../middleware/auth';
@@ -116,10 +119,31 @@ itemsRouter.get(
   }),
 );
 
+itemsRouter.get(
+  '/:itemId/versions/:versionId/diff',
+  requireFamily('family:read'),
+  validateQuery(versionDiffQuerySchema),
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const ctx = familyCtx(req);
+    const { base } = queryOf<{ base?: string }>(req);
+    res.json(
+      await itemService.diffVersion(
+        user.id,
+        ctx,
+        req.params.itemId!,
+        req.params.versionId!,
+        base,
+      ),
+    );
+  }),
+);
+
 itemsRouter.post(
   '/:itemId/versions/:versionId/revert',
   requireFamily('family:read'),
   writeLimiter,
+  validateBody(revertVersionSchema),
   asyncHandler(async (req, res) => {
     const user = currentUser(req);
     const ctx = familyCtx(req);
@@ -128,6 +152,7 @@ itemsRouter.post(
       ctx,
       req.params.itemId!,
       req.params.versionId!,
+      req.body as RevertVersionInput,
       clientMeta(req),
     );
     res.json({ item });
