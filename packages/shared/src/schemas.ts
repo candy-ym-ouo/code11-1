@@ -126,6 +126,11 @@ export const rejectNoteSchema = z.object({
   reason: trimmed(200),
 });
 
+/** 选择性回滚：fields 为要恢复的字段组；不传或为空时回滚全部已记录字段。 */
+export const revertVersionSchema = z.object({
+  fields: z.array(z.string().max(32)).max(20).optional(),
+});
+
 export const createShareLinkSchema = z.object({
   itemIds: z.array(z.string().cuid()).min(1).max(200),
   expiresInDays: z.number().int().min(1).max(90).default(7),
